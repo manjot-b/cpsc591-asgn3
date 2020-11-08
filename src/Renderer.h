@@ -45,6 +45,12 @@ class Renderer
 		float deltaTime;
 		float lastFrame;
 
+		glm::vec3 lightPosition;
+		bool useOrientation;
+		float orientationExp;
+		float zmin;
+		float depthScale;
+
 		void initWindow();
 		void loadModels(const char* modelDirectory);
 		void loadTextures(const char* textureDirectory);

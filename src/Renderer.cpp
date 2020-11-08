@@ -11,7 +11,9 @@
 Renderer::Renderer(const char* modelDirectory, const char* textureDirectory) :
 	textureIndex(0), modelIndex(0), rotate(0), scale(1),
 	firstMouse(true), lastX(width / 2.0f), lastY(height / 2.0f),
-	shiftPressed(false), deltaTime(0.0f), lastFrame(0.0f)
+	shiftPressed(false), deltaTime(0.0f), lastFrame(0.0f),
+	lightPosition(0.0f, 0.0f, 2.0f), useOrientation(false), orientationExp(1.0f),
+	zmin(0.1f), depthScale(1.1f)
 {
 	initWindow();
 	shader = std::make_unique<Shader>("shaders/vertex.glsl", "shaders/fragment.glsl");
@@ -25,6 +27,7 @@ Renderer::Renderer(const char* modelDirectory, const char* textureDirectory) :
 	shader->setUniformMatrix4fv("view", camera.getViewMatrix());
 
 	shader->setUniform1i("tex", 0);	// sets location of texture to 0.
+	shader->setUniform3fv("lightPosition", lightPosition);
 
 	glUseProgram(0);	// unbind shader
 }
@@ -144,6 +147,11 @@ void Renderer::run()
 
 		shader->use();
 		shader->setUniformMatrix4fv("view", camera.getViewMatrix());
+		shader->setUniform3fv("toCamera", camera.getPosition());
+		shader->setUniform1i("useOrientation", useOrientation);
+		shader->setUniform1f("orientationExp", orientationExp);
+		shader->setUniform1f("zmin", zmin);
+		shader->setUniform1f("depthScale", depthScale);
 
 		// we set the uniform in fragment shader to location 0.
 		textures[textureIndex]->bind(GL_TEXTURE0);
