@@ -13,7 +13,7 @@ Renderer::Renderer(const char* modelDirectory, const char* textureDirectory) :
 	firstMouse(true), lastX(width / 2.0f), lastY(height / 2.0f),
 	shiftPressed(false), deltaTime(0.0f), lastFrame(0.0f),
 	lightPosition(0.0f, 0.0f, 2.0f), useOrientation(false), orientationExp(1.0f),
-	zmin(0.1f), depthScale(1.1f)
+	zmin(0.1f), depthScale(3.0f)
 {
 	initWindow();
 	shader = std::make_unique<Shader>("shaders/vertex.glsl", "shaders/fragment.glsl");
@@ -168,7 +168,10 @@ void Renderer::run()
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		printSettings(true);
 	}
+	printSettings(false);
 }
 
 /*
@@ -269,7 +272,7 @@ void Renderer::keyCallback(GLFWwindow* window, int key, int scancode, int action
 {
 	Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 	
-	if (action == GLFW_PRESS)
+	if (action == GLFW_PRESS || action == GLFW_REPEAT)
 	{
 		if (!(mods & GLFW_MOD_SHIFT))
 		{
@@ -289,9 +292,23 @@ void Renderer::keyCallback(GLFWwindow* window, int key, int scancode, int action
 				case GLFW_KEY_7:
 					renderer->modelIndex = key - GLFW_KEY_1;
 					break;
+				// Depth based attribute mapping controls.
+				case GLFW_KEY_R:
+					renderer->depthScale += 0.1f;
+					break;
+				case GLFW_KEY_T:
+					renderer->zmin += 0.1f;
+					break;
+				// Orientation based attribute mapping controls.
+				case GLFW_KEY_F:
+					renderer->useOrientation = !renderer->useOrientation;
+					break;
+				case GLFW_KEY_G:
+					renderer->orientationExp += 0.1;
+					break;
 			}
 		}
-		else
+		else // Shift pressed
 		{
 			switch(key)
 			{
@@ -304,6 +321,17 @@ void Renderer::keyCallback(GLFWwindow* window, int key, int scancode, int action
 				case GLFW_KEY_6:
 				case GLFW_KEY_7:
 					renderer->textureIndex = key - GLFW_KEY_1;
+					break;
+				// Depth based attribute mapping controls.
+				case GLFW_KEY_R:
+					renderer->depthScale = glm::max(renderer->depthScale-0.1f, 1.1f);
+					break;
+				case GLFW_KEY_T:
+					renderer->zmin = glm::max(renderer->zmin-0.1f, 0.1f);
+					break;
+				// Orientation based attribute mapping controls.
+				case GLFW_KEY_G:
+					renderer->orientationExp = glm::max(renderer->orientationExp-0.1f, 0.1f);
 					break;
 			}
 		}
@@ -328,4 +356,31 @@ void Renderer::mouseCallback(GLFWwindow* window, double xpos, double ypos)
     renderer->lastY = ypos;
 
     renderer->camera.processMouseMovement(xoffset, yoffset);
+}
+
+void Renderer::printSettings(bool clear)
+{
+	unsigned int lines = 7;
+
+	auto boolStr = [](bool value){ return value ? "on" : "off"; };
+
+	std::cout << "Model Index: " << modelIndex + 1 << '\n'
+		<< "Texture Index: " << textureIndex + 1 << '\n'
+		<< "Orientation Based: " << boolStr(useOrientation) << '\n'
+		<< "Orientation r: " << std::fixed << std::setprecision(3) << orientationExp << '\n'
+		<< "Depth Based: " << boolStr(!useOrientation) << '\n'
+		<< "Depth r: " << depthScale << '\n'
+		<< "Depth zmin: " << zmin << '\n';
+
+	if (clear) {
+		// Move to beginning of line
+		std::cout << '\r';
+		for(; lines > 0; lines--)
+		{
+			// move up a line
+			std::cout << "\e[A";
+		}
+		// Erase screen from current line down.
+		std::cout << "\e[J";
+	}
 }
