@@ -8,8 +8,8 @@
 
 #include "Renderer.h"
 
-Renderer::Renderer(const char* modelDirectory) :
-	modelIndex(0), rotate(0), scale(1),
+Renderer::Renderer(const char* modelDirectory, const char* textureDirectory) :
+	textureIndex(0), modelIndex(0), rotate(0), scale(1),
 	firstMouse(true), lastX(width / 2.0f), lastY(height / 2.0f),
 	shiftPressed(false), deltaTime(0.0f), lastFrame(0.0f)
 {
@@ -17,13 +17,13 @@ Renderer::Renderer(const char* modelDirectory) :
 	shader = std::make_unique<Shader>("shaders/vertex.glsl", "shaders/fragment.glsl");
 	shader->link();
 	loadModels(modelDirectory);	
+	loadTextures(textureDirectory);
 	
 	perspective = glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 100.0f);
 	shader->use();
 	shader->setUniformMatrix4fv("perspective", perspective);
 	shader->setUniformMatrix4fv("view", camera.getViewMatrix());
 
-	texture = std::make_unique<Texture>("images/tree.jpeg");
 	shader->setUniform1i("tex", 0);	// sets location of texture to 0.
 
 	glUseProgram(0);	// unbind shader
@@ -110,6 +110,24 @@ void Renderer::loadModels(const char* modelDirectory)
 	}
 }
 
+void Renderer::loadTextures(const char* textureDirectory)
+{
+	namespace fs = std::filesystem;
+	const std::string extension = ".png";
+
+	unsigned int count = 1;
+	for (const auto& entry : fs::directory_iterator(textureDirectory))
+	{
+		if (entry.is_regular_file() && entry.path().extension() == extension)
+		{
+			std::cout << "Loading " << entry.path() << "..." << std::flush;
+			textures.push_back(std::make_unique<Texture>(entry.path().c_str()));
+			std::cout << "Done! Index: " << count << "\n";
+			count++;
+		}
+	}
+}
+
 void Renderer::run()
 {
 
@@ -127,7 +145,8 @@ void Renderer::run()
 		shader->use();
 		shader->setUniformMatrix4fv("view", camera.getViewMatrix());
 
-		texture->bind(GL_TEXTURE0);	// we set the uniform in fragment shader to location 0.
+		// we set the uniform in fragment shader to location 0.
+		textures[textureIndex]->bind(GL_TEXTURE0);
 
 		models[modelIndex]->rotate(rotate);
 		models[modelIndex]->scale(scale);
@@ -244,17 +263,41 @@ void Renderer::keyCallback(GLFWwindow* window, int key, int scancode, int action
 	
 	if (action == GLFW_PRESS)
 	{
-		switch(key)
+		if (!(mods & GLFW_MOD_SHIFT))
 		{
-			case GLFW_KEY_ESCAPE:
-				glfwSetWindowShouldClose(window, true);
-				break;
+			switch(key)
+			{
+				case GLFW_KEY_ESCAPE:
+					glfwSetWindowShouldClose(window, true);
+					break;
 
-			// Select model
-			case GLFW_KEY_1:
-			case GLFW_KEY_2:
-				renderer->modelIndex = key - GLFW_KEY_1;
-				break;
+				// Select model
+				case GLFW_KEY_1:
+				case GLFW_KEY_2:
+				case GLFW_KEY_3:
+				case GLFW_KEY_4:
+				case GLFW_KEY_5:
+				case GLFW_KEY_6:
+				case GLFW_KEY_7:
+					renderer->modelIndex = key - GLFW_KEY_1;
+					break;
+			}
+		}
+		else
+		{
+			switch(key)
+			{
+				// Select texture
+				case GLFW_KEY_1:
+				case GLFW_KEY_2:
+				case GLFW_KEY_3:
+				case GLFW_KEY_4:
+				case GLFW_KEY_5:
+				case GLFW_KEY_6:
+				case GLFW_KEY_7:
+					renderer->textureIndex = key - GLFW_KEY_1;
+					break;
+			}
 		}
 	}
 }

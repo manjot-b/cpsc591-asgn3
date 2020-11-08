@@ -8,14 +8,14 @@
 
 int main(int argc, char *argv[])
 {
-	if (argc < 2)
+	if (argc < 3)
 	{
-		std::cerr << "Usage: " << argv[0] << " <obj_dir>"  << std::endl;
+		std::cerr << "Usage: " << argv[0] << " <obj_dir> <texture_dir>"  << std::endl;
 		return -1;
 	}
 
 	{
-		Renderer renderer(argv[1]);
+		Renderer renderer(argv[1], argv[2]);
 		renderer.run();
 	}
 	// Need to terminate GLFW context after all OpenGL objects are deleted.

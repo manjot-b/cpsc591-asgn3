@@ -16,15 +16,16 @@
 class Renderer
 {
 	public:
-		Renderer(const char* modelDirectory);
+		Renderer(const char* modelDirectory, const char* textureDirectory);
 		~Renderer();
 		void run();
 
 	private:
 		GLFWwindow* window;
 		std::unique_ptr<Shader> shader;
-		std::unique_ptr<Texture> texture;
+		std::vector<std::unique_ptr<Texture>> textures;
 		std::vector<std::unique_ptr<Model>> models;
+		unsigned int textureIndex;
 		unsigned int modelIndex;
 		
 		const unsigned int height = 800;
@@ -46,6 +47,7 @@ class Renderer
 
 		void initWindow();
 		void loadModels(const char* modelDirectory);
+		void loadTextures(const char* textureDirectory);
 		void processWindowInput();
 		static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 		static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
